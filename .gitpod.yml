@@ -1,2 +1,3 @@
 tasks:
-  - command: pip3 install -U platformio && platformio run
+  - before: pip3 install -U platformio
+  - command: platformio run
