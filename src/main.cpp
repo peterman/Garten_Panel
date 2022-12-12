@@ -7,16 +7,19 @@
 #include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
 #include <ESPConnect.h>
-#include <LittleFS.h>
+//#include <LittleFS.h>
 
 #include <Ticker.h>
 #include <time.h>
+
 
 #define NTP_SERVER "de.pool.ntp.org"
 #define MY_TZ "CET-1CEST,M3.5.0/02,M10.5.0/03"
 #define LED0 2
 #define BKLED 15
 #define BEEPER 26
+#define TFT_CAL_FILE "/.touchdata"
+#define REPEAT_CAL false
 
 hw_timer_t * timer_clear_status = NULL;
 time_t now;
@@ -34,6 +37,9 @@ int actpage = 0, oldpage = 99;
 TFT_eSPI tft=TFT_eSPI();
 AsyncWebServer server(80);
 
+#include "touch_calibrate.h"
+
+
 
 /* --------------------------------------------------------- */
 void IRAM_ATTR timer_clear_statusISR (){
@@ -41,6 +47,7 @@ void IRAM_ATTR timer_clear_statusISR (){
   
   timerAlarmDisable(timer_clear_status);
 }
+
 
 void clear_top_bar(){
   tft.fillRect(0,0,320,15,TFT_LIGHTGREY);
@@ -149,10 +156,15 @@ void setup() {
   timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
   pinMode(BKLED, OUTPUT);
   digitalWrite(BKLED,0);
+
   Serial.begin(115200);
   Serial.println("Starting...");
+
+  
+
   tft.init();
   tft.setRotation(1);
+  touch_calibrate();
   tft.fillScreen(TFT_WHITE);
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
   clear_top_bar(); clear_status_bar();
@@ -165,15 +177,12 @@ void setup() {
   ESPConnect.autoConnect("ESP32Config");
   ESPConnect.begin(&server);
   WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-  Serial.println("Formatting LittleFS filesystem");
-  //LittleFS.format();
-  Serial.println("Mount LittleFS");
-  if (!LittleFS.begin()) {
-    Serial.println("LittleFS mount failed");
-    return;
-  }
-  server.addHandler(new SPIFFSEditor(LittleFS, "admin","admin"));
-  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.htm");
+    
+  server.addHandler(new SPIFFSEditor(SPIFFS, "admin","admin"));
+  server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, "text/plain", String(ESP.getFreeHeap()));
+  });
+  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   server.begin();
   drawWifiQuality();
   getWifiSignal.attach(60, drawWifiQuality);
@@ -188,5 +197,6 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  
 }
 
