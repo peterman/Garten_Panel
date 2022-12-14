@@ -8,7 +8,7 @@ void touch_calibrate()
   uint8_t calDataOK = 0;
 
   // check file system exists
-  if (!SPIFFS.begin()) {
+  if (!SPIFFS.begin(false,"/littlefs")) {
     Serial.println("Formatting file system");
     SPIFFS.format();
     SPIFFS.begin();

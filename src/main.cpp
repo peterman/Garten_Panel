@@ -3,11 +3,12 @@
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include <TFT_eSPI.h>
+#include <TFT_eWidget.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
 #include <ESPConnect.h>
-//#include <LittleFS.h>
+#include <LittleFS.h>
 
 #include <Ticker.h>
 #include <time.h>
@@ -20,6 +21,7 @@
 #define BEEPER 26
 #define TFT_CAL_FILE "/.touchdata"
 #define REPEAT_CAL false
+#define SPIFFS LittleFS
 
 hw_timer_t * timer_clear_status = NULL;
 time_t now;
@@ -30,6 +32,7 @@ String wochentage[7]={"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"};
 Ticker getWifiSignal;
 Ticker pages;
 Ticker refresh_page;
+uint32_t scanTime;
 
 int actpage = 0, oldpage = 99;
 
@@ -37,43 +40,23 @@ int actpage = 0, oldpage = 99;
 TFT_eSPI tft=TFT_eSPI();
 AsyncWebServer server(80);
 
-#include "touch_calibrate.h"
+ButtonWidget btnL = ButtonWidget(&tft);
+ButtonWidget btnR = ButtonWidget(&tft);
+#define BUTTON_W 30
+#define BUTTON_H 15
+ButtonWidget* btn[] = {&btnL, &btnR};;
+uint8_t buttonCount = sizeof(btn) / sizeof(btn[0]);
 
+#include "touch_calibrate.h"
+#include "functions.h"
 
 
 /* --------------------------------------------------------- */
-void IRAM_ATTR timer_clear_statusISR (){
-  
-  
-  timerAlarmDisable(timer_clear_status);
-}
 
 
-void clear_top_bar(){
-  tft.fillRect(0,0,320,15,TFT_LIGHTGREY);
-  tft.drawRect(0,0,320,15,TFT_BLACK);
-}
 
-void clear_status_bar(){
-  tft.fillRect(0,224,320,239,TFT_LIGHTGREY);
-  tft.drawRect(0,224,320,239,TFT_BLACK);
-}
 
-// converts the dBm to a range between 0 and 100%
-int8_t getWifiQuality() {
-  if (WiFi.status() != WL_CONNECTED){
-    return -1;
-  } else {
-    int32_t dbm = WiFi.RSSI();
-    if(dbm <= -100) {
-        return 0;
-    } else if(dbm >= -50) {
-        return 100;
-    } else {
-        return 2 * (dbm + 100);
-    }
-  }
-}
+
 
 void drawWifiQuality() {
   int8_t quality = getWifiQuality();
@@ -89,11 +72,7 @@ void drawWifiQuality() {
   }
 }
 
-void switch_pages(){
-  actpage++; if (actpage > 3) { actpage = 0; }
-  
-  Serial.println(String(actpage));
-}
+
 void getdatetime(){
   time(&now);
   localtime_r(&now, &tm);
@@ -115,7 +94,7 @@ void getdatetime(){
 void ref_page() {
   getdatetime();
   if (oldpage != actpage){
-    tft.fillRect(0,15,320,209,TFT_WHITE);
+    tft.fillRect(0,15,320,199,TFT_WHITE);
     
     oldpage = actpage;
   }
@@ -155,7 +134,7 @@ void setup() {
   timer_clear_status = timerBegin(0,80,true);
   timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
   pinMode(BKLED, OUTPUT);
-  digitalWrite(BKLED,0);
+  digitalWrite(BKLED,1);
 
   Serial.begin(115200);
   Serial.println("Starting...");
@@ -184,7 +163,7 @@ void setup() {
   });
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   server.begin();
-  drawWifiQuality();
+  
   getWifiSignal.attach(60, drawWifiQuality);
   pages.attach(10,switch_pages);
   refresh_page.attach(1,ref_page);
@@ -193,10 +172,31 @@ void setup() {
   tft.setTextColor(TFT_BLACK,TFT_LIGHTGREY);
   tft.drawString(ESPConnect.getSSID(),10,5,1);
   tft.drawString(WiFi.localIP().toString(),100,5,1);
+  initButtons();
+  drawWifiQuality();
+  digitalWrite(BKLED,0);
+  scanTime = millis();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   
+  uint16_t t_x=9999, t_y=9999;
+  if (millis() - scanTime >= 100 ){
+    bool pressed = tft.getTouch(&t_x, &t_y);
+    scanTime=millis();
+    for (uint8_t b=0; b<buttonCount; b++){
+      if (pressed){
+        if (btn[b]->contains(t_x,t_y)){
+          btn[b]->press(true);
+          btn[b]->pressAction();
+        }
+      }
+      else {
+        btn[b]->press(false);
+        btn[b]->releaseAction();
+      }
+    }
+  }
 }
 
