@@ -9,6 +9,7 @@
 #include <SPIFFSEditor.h>
 #include <ESPConnect.h>
 #include <LittleFS.h>
+#include <PubSubClient.h>
 
 #include <Ticker.h>
 #include <time.h>
@@ -175,28 +176,27 @@ void setup() {
   initButtons();
   drawWifiQuality();
   digitalWrite(BKLED,0);
-  scanTime = millis();
+  
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  
+  static uint32_t scanTime = millis();
   uint16_t t_x=9999, t_y=9999;
-  if (millis() - scanTime >= 100 ){
-    bool pressed = tft.getTouch(&t_x, &t_y);
-    scanTime=millis();
-    for (uint8_t b=0; b<buttonCount; b++){
-      if (pressed){
-        if (btn[b]->contains(t_x,t_y)){
-          btn[b]->press(true);
-          btn[b]->pressAction();
-        }
-      }
-      else {
-        btn[b]->press(false);
-        btn[b]->releaseAction();
-      }
-    }
+  //if (millis() - scanTime >= 100 ){
+  //  bool pressed = tft.getTouch(&t_x, &t_y);
+  //  scanTime=millis();
+  //  for (uint8_t b=0; b<buttonCount; b++){
+  //    if (pressed){
+  //      if (btn[b]->contains(t_x,t_y)){
+  //        //btn[b]->press(true);
+  //        //btn[b]->pressAction();
+  //      }
+  //    }
+  //    else {
+  //      //btn[b]->press(false);
+  //      //btn[b]->releaseAction();
+  //    } 
+  //  } 
   }
-}
 

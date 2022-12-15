@@ -31,13 +31,13 @@ void btnR_releaseAction(void){
 void initButtons(){
   uint16_t x = (tft.width() - BUTTON_W);
   uint16_t y = (tft.height()- BUTTON_H);
-  btnL.initButtonUL(0,y,BUTTON_W,BUTTON_H,TFT_WHITE,TFT_RED,TFT_BLACK,"<-",1);
+  btnL.initButtonUL(0,y,BUTTON_W,BUTTON_H,TFT_BLACK,TFT_LIGHTGREY,TFT_BLUE,"<-",1);
   btnL.setLabelDatum(-12,1,0);
   btnL.drawButton(false,"<-");
   btnL.setPressAction(btnL_pressAction);
   btnL.setReleaseAction(btnL_releaseAction);
   
-  btnR.initButtonUL(x,y,BUTTON_W,BUTTON_H,TFT_WHITE,TFT_RED,TFT_BLACK,"->",1);
+  btnR.initButtonUL(x,y,BUTTON_W,BUTTON_H,TFT_BLACK,TFT_LIGHTGREY,TFT_BLUE,"->",1);
   btnR.setLabelDatum(0,1,0);
   btnR.drawButton(false,"->");
   btnR.setPressAction(btnR_pressAction);
