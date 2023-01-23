@@ -1,9 +1,11 @@
 #include <Arduino.h>
+#include <SPI.h>
 #include <FS.h>
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include <TFT_eSPI.h>
 #include <TFT_eWidget.h>
+
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
@@ -13,6 +15,11 @@
 
 #include <Ticker.h>
 #include <time.h>
+
+#define GFXFF 1
+#define FF18 &FreeSans12pt7b
+
+
 
 
 #define NTP_SERVER "de.pool.ntp.org"
@@ -28,7 +35,7 @@ hw_timer_t * timer_clear_status = NULL;
 time_t now;
 tm tm;
 String adate, atime;
-String wochentage[7]={"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"};
+String wochentage[7]={"Sonntag", "Montag", "Dienstag", "Mittwoch", "donnerstag", "Freitag", "Samstag"};
 
 Ticker getWifiSignal;
 Ticker pages;
@@ -39,6 +46,9 @@ int actpage = 0, oldpage = 99;
 
 
 TFT_eSPI tft=TFT_eSPI();
+
+
+
 AsyncWebServer server(80);
 
 ButtonWidget btnL = ButtonWidget(&tft);
@@ -78,7 +88,7 @@ void getdatetime(){
   time(&now);
   localtime_r(&now, &tm);
   atime=""; adate="";
-  adate = wochentage[tm.tm_wday] + ".  ";
+  adate = wochentage[tm.tm_wday] + "  ";
   if (tm.tm_mday < 10) { adate += "0"; } 
   adate += tm.tm_mday; adate += ".";
   if (tm.tm_mon + 1 < 10){ adate +="0"; }
@@ -99,20 +109,19 @@ void ref_page() {
     
     oldpage = actpage;
   }
-  tft.drawString(adate,10,20,4);
-  tft.drawString(atime,210,20,4);
+  displayDateTime();
   switch (actpage) {
   case 1:
-    tft.setTextColor(TFT_GREEN, TFT_WHITE);
+    
     break;
   case 2:
-    tft.setTextColor(TFT_RED, TFT_WHITE);
+    
     break;
   case 3:
-    tft.setTextColor(TFT_BLUE, TFT_WHITE);
+    
     break;
   default:
-    tft.setTextColor(TFT_BLACK, TFT_WHITE);
+    
     break;
   }
 };
@@ -135,7 +144,7 @@ void setup() {
   timer_clear_status = timerBegin(0,80,true);
   timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
   pinMode(BKLED, OUTPUT);
-  digitalWrite(BKLED,1);
+  digitalWrite(BKLED,0);
 
   Serial.begin(115200);
   Serial.println("Starting...");
@@ -144,10 +153,12 @@ void setup() {
 
   tft.init();
   tft.setRotation(1);
+  
+
   touch_calibrate();
   tft.fillScreen(TFT_WHITE);
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
-  clear_top_bar(); clear_status_bar();
+  clear_top_bar(); //clear_status_bar();
   // starte NTP
   configTime(0,0,NTP_SERVER);
   setenv("TZ",MY_TZ,1);

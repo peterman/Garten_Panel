@@ -50,9 +50,14 @@ void clear_top_bar(){
   tft.drawRect(0,0,320,15,TFT_BLACK);
 }
 
-void clear_status_bar(){
-  tft.fillRect(30,224,260,239,TFT_LIGHTGREY);
-  tft.drawRect(30,224,260,239,TFT_BLACK);
+void displayDateTime(){
+  tft.fillRect(30,224,260,239,TFT_WHITE);
+  tft.setTextColor(TFT_BLACK);
+  tft.setTextDatum(BC_DATUM); 
+  tft.setFreeFont(FF18);
+  tft.setCursor(160,239);
+  tft.print("Serif Bold 9pt"); 
+  tft.setTextColor(TFT_BLACK, TFT_WHITE);
 }
 
 
