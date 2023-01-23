@@ -141,8 +141,8 @@ void setup() {
   //  disable brownout detector
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG,0);
   // Interrupt Clear Status
-  timer_clear_status = timerBegin(0,80,true);
-  timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
+  //timer_clear_status = timerBegin(0,80,true);
+  //timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
   pinMode(BKLED, OUTPUT);
   digitalWrite(BKLED,0);
 
@@ -176,9 +176,9 @@ void setup() {
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   server.begin();
   
-  getWifiSignal.attach(60, drawWifiQuality);
-  pages.attach(10,switch_pages);
-  refresh_page.attach(1,ref_page);
+  //getWifiSignal.attach(60, drawWifiQuality);
+  //pages.attach(10,switch_pages);
+  //refresh_page.attach(1,ref_page);
 
   Serial.println(WiFi.localIP().toString()); 
   tft.setTextColor(TFT_BLACK,TFT_LIGHTGREY);
@@ -187,27 +187,30 @@ void setup() {
   initButtons();
   drawWifiQuality();
   digitalWrite(BKLED,0);
+  tone(BEEPER,440,200);
+  noTone(BEEPER);
   
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   static uint32_t scanTime = millis();
-  uint16_t t_x=9999, t_y=9999;
+  uint16_t t_x=0, t_y=0;
   //if (millis() - scanTime >= 100 ){
-  //  bool pressed = tft.getTouch(&t_x, &t_y);
+  bool pressed = tft.getTouch(&t_x, &t_y);
   //  scanTime=millis();
-  //  for (uint8_t b=0; b<buttonCount; b++){
-  //    if (pressed){
+  for (uint8_t b=0; b<buttonCount; b++){
+    if (pressed && btn[b]->contains(t_x, t_y)){
   //      if (btn[b]->contains(t_x,t_y)){
-  //        //btn[b]->press(true);
+        btn[b]->press(true);
   //        //btn[b]->pressAction();
   //      }
-  //    }
-  //    else {
-  //      //btn[b]->press(false);
+      }
+      else {
+        btn[b]->press(false);
   //      //btn[b]->releaseAction();
-  //    } 
-  //  } 
+      } 
+    } 
+  //delay(10);
   }
 

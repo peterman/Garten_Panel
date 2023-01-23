@@ -1,9 +1,9 @@
 #include <Arduino.h>
 
 /* Löschen Interrupt Statusline löschen */
-void IRAM_ATTR timer_clear_statusISR (){
-  timerAlarmDisable(timer_clear_status);
-}
+//void IRAM_ATTR timer_clear_statusISR (){
+//  timerAlarmDisable(timer_clear_status);
+//}
 
 
 /* Button Reaktionen  */
