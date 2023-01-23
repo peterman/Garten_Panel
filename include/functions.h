@@ -9,7 +9,8 @@
 /* Button Reaktionen  */
 void btnL_pressAction(void){
     if (btnL.justPressed()){
-        actpage++; if (actpage > 3) { actpage = 0; }
+        actpage--; if (actpage < 0) { actpage = 3; }
+        Serial.println("Left Button");
     }
 }
 
@@ -17,8 +18,9 @@ void btnL_releaseAction(void){
 
 }
 void btnR_pressAction(void){
-    if (btnL.justPressed()){
-        actpage--; if (actpage < 0) { actpage = 3; }
+    if (btnR.justPressed()){
+        actpage++; if (actpage > 3) { actpage = 0; }
+        Serial.println("Right Button");
     }
 }
 
@@ -53,10 +55,7 @@ void clear_top_bar(){
 void displayDateTime(){
   tft.fillRect(30,224,260,239,TFT_WHITE);
   tft.setTextColor(TFT_BLACK);
-  tft.setTextDatum(BC_DATUM); 
-  tft.setFreeFont(FF18);
-  tft.setCursor(160,239);
-  tft.print("Serif Bold 9pt"); 
+  tft.drawCentreString(adate+"\n"+atime,160,228,1); 
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
 }
 
@@ -77,9 +76,34 @@ int8_t getWifiQuality() {
   }
 }
 
-/* schaltet seiten um */
-void switch_pages(){
-  actpage++; if (actpage > 3) { actpage = 0; }
-  
-  Serial.println(String(actpage));
+
+void drawWifiQuality() {
+  int8_t quality = getWifiQuality();
+  tft.setTextColor(TFT_BLACK, TFT_LIGHTGREY);
+  tft.drawRightString("  " + String(quality) + "%",305, 5, 1);
+  for (int8_t i = 0; i < 4; i++) {
+    tft.drawFastVLine(310 + 2 * i,4,8, TFT_LIGHTGREY);
+    for (int8_t j = 0; j < 2 * (i + 1); j++) {
+      if (quality > i * 25 || j == 0) {
+        tft.drawPixel(310 + 2 * i, 12 - j,TFT_BLACK);
+      }
+    }
+  }
+}
+void getdatetime(){
+  time(&now);
+  localtime_r(&now, &tm);
+  atime=""; adate="";
+  adate = wochentage[tm.tm_wday] + "  ";
+  if (tm.tm_mday < 10) { adate += "0"; } 
+  adate += tm.tm_mday; adate += ".";
+  if (tm.tm_mon + 1 < 10){ adate +="0"; }
+  adate += tm.tm_mon+1; adate += ".";
+  adate += tm.tm_year + 1900;
+  if (tm.tm_hour < 10) { atime = "0"; } 
+  atime += tm.tm_hour; atime += ":";
+  if (tm.tm_min < 10){ atime +="0"; }
+  atime += tm.tm_min; atime += ":";
+  if (tm.tm_sec < 10){ atime +="0"; }
+  atime += tm.tm_sec;
 }

@@ -35,7 +35,7 @@ hw_timer_t * timer_clear_status = NULL;
 time_t now;
 tm tm;
 String adate, atime;
-String wochentage[7]={"Sonntag", "Montag", "Dienstag", "Mittwoch", "donnerstag", "Freitag", "Samstag"};
+String wochentage[7]={"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
 
 Ticker getWifiSignal;
 Ticker pages;
@@ -54,13 +54,13 @@ AsyncWebServer server(80);
 ButtonWidget btnL = ButtonWidget(&tft);
 ButtonWidget btnR = ButtonWidget(&tft);
 #define BUTTON_W 30
-#define BUTTON_H 15
+#define BUTTON_H 20
 ButtonWidget* btn[] = {&btnL, &btnR};;
 uint8_t buttonCount = sizeof(btn) / sizeof(btn[0]);
 
 #include "touch_calibrate.h"
 #include "functions.h"
-
+#include "crontab.h"
 
 /* --------------------------------------------------------- */
 
@@ -69,62 +69,10 @@ uint8_t buttonCount = sizeof(btn) / sizeof(btn[0]);
 
 
 
-void drawWifiQuality() {
-  int8_t quality = getWifiQuality();
-  tft.setTextColor(TFT_BLACK, TFT_LIGHTGREY);
-  tft.drawRightString("  " + String(quality) + "%",305, 5, 1);
-  for (int8_t i = 0; i < 4; i++) {
-    tft.drawFastVLine(310 + 2 * i,4,8, TFT_LIGHTGREY);
-    for (int8_t j = 0; j < 2 * (i + 1); j++) {
-      if (quality > i * 25 || j == 0) {
-        tft.drawPixel(310 + 2 * i, 12 - j,TFT_BLACK);
-      }
-    }
-  }
-}
 
 
-void getdatetime(){
-  time(&now);
-  localtime_r(&now, &tm);
-  atime=""; adate="";
-  adate = wochentage[tm.tm_wday] + "  ";
-  if (tm.tm_mday < 10) { adate += "0"; } 
-  adate += tm.tm_mday; adate += ".";
-  if (tm.tm_mon + 1 < 10){ adate +="0"; }
-  adate += tm.tm_mon+1; adate += ".";
-  adate += tm.tm_year + 1900;
-  if (tm.tm_hour < 10) { atime = "0"; } 
-  atime += tm.tm_hour; atime += ":";
-  if (tm.tm_min < 10){ atime +="0"; }
-  atime += tm.tm_min; atime += ":";
-  if (tm.tm_sec < 10){ atime +="0"; }
-  atime += tm.tm_sec;
-}
+
   
-void ref_page() {
-  getdatetime();
-  if (oldpage != actpage){
-    tft.fillRect(0,15,320,199,TFT_WHITE);
-    
-    oldpage = actpage;
-  }
-  displayDateTime();
-  switch (actpage) {
-  case 1:
-    
-    break;
-  case 2:
-    
-    break;
-  case 3:
-    
-    break;
-  default:
-    
-    break;
-  }
-};
 
 void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   Serial.println("Disconnected from WiFi access point");
@@ -176,8 +124,8 @@ void setup() {
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   server.begin();
   
-  //getWifiSignal.attach(60, drawWifiQuality);
-  //pages.attach(10,switch_pages);
+  
+  
   //refresh_page.attach(1,ref_page);
 
   Serial.println(WiFi.localIP().toString()); 
@@ -187,8 +135,7 @@ void setup() {
   initButtons();
   drawWifiQuality();
   digitalWrite(BKLED,0);
-  tone(BEEPER,440,200);
-  noTone(BEEPER);
+  
   
 }
 
@@ -196,21 +143,23 @@ void loop() {
   // put your main code here, to run repeatedly:
   static uint32_t scanTime = millis();
   uint16_t t_x=0, t_y=0;
-  //if (millis() - scanTime >= 100 ){
-  bool pressed = tft.getTouch(&t_x, &t_y);
-  //  scanTime=millis();
-  for (uint8_t b=0; b<buttonCount; b++){
-    if (pressed && btn[b]->contains(t_x, t_y)){
-  //      if (btn[b]->contains(t_x,t_y)){
-        btn[b]->press(true);
-  //        //btn[b]->pressAction();
-  //      }
+  if (millis() - scanTime >= 50 ){
+    bool pressed = tft.getTouch(&t_x, &t_y);
+    scanTime=millis();
+    for (uint8_t b=0; b<buttonCount; b++){
+      if (pressed){
+        if (btn[b]->contains(t_x,t_y)){
+          btn[b]->press(true);
+          btn[b]->pressAction();
+        }
       }
       else {
         btn[b]->press(false);
-  //      //btn[b]->releaseAction();
+        btn[b]->releaseAction();
       } 
-    } 
-  //delay(10);
-  }
+    }
+  } 
+  cronjob();  
+  delay(10);
+}
 

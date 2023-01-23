@@ -1,4 +1,5 @@
 #include <Arduino.h>
+
 ////////////// More information at: http://www.aeq-web.com?ref=arduinoide ///////////////
 
 //////////////////////// Timer Settings ////////////////////////////////////////////////
@@ -17,13 +18,26 @@ long cront1, cront2, cront3, cront4, cront5;
 
 void cron1() {
   //Your Cronjob action here
-  --timeout_screen;
-  if (timeout_screen < 1) {
-    timeout_screen = 0;
-    bklight = (bklight - (bklight_max - bklight_min)/10);
-    if (bklight < bklight_min) { 
-      bklight = bklight_min;
-      }
+  getdatetime();
+  if (oldpage != actpage){
+    tft.fillRect(0,15,320,199,TFT_WHITE);
+    
+    oldpage = actpage;
+  }
+  displayDateTime();
+  switch (actpage) {
+  case 1:
+    tft.drawCentreString("Page 1",160,120,2);
+    break;
+  case 2:
+    tft.drawCentreString("Page 2",160,120,2);
+    break;
+  case 3:
+    tft.drawCentreString("Page 3",160,120,2);
+    break;
+  default:
+    
+    break;
   }
 }
 
@@ -34,25 +48,8 @@ void cron2() {
 
 void cron3() {
   //Your Cronjob action here
-  //d += 4; if (d > 360) d = 0;
-
-    // Create a Sine wave for testing, value is in range 0 - 100
-  //  float value = 50.0 + 50.0 * sin((d + 0) * 0.0174532925);
-
-  //  float current;
-  //  current = mapValue(value, (float)0.0, (float)100.0, (float)0.0, (float)2.0);
-    //Serial.print("I = "); Serial.print(current);
-  //  amps.updateNeedle(current, 0);
-
-  //  float voltage;
-  //  voltage = mapValue(value, (float)0.0, (float)100.0, (float)0.0, (float)10.0);
-    //Serial.print(", V = "); Serial.println(voltage);
-  //  volts.updateNeedle(voltage, 0);
-    
-  //  float resistance;
-  //  resistance = mapValue(value, (float)0.0, (float)100.0, (float)0.0, (float)100.0);
-    //Serial.print(", R = "); Serial.println(resistance);
-  //  ohms.updateNeedle(resistance, 0);
+  actpage++; if (actpage > 3) { actpage = 0; }
+  
 }
 
 void cron4() {
@@ -74,7 +71,3 @@ void cronjob() {
   if ((cront5 + (cron_5 * 1000)) <= tmp) { cron5(); cront5 = millis(); }
 }
 
-void IRAM_ATTR timer1ISR(){
-  clearStatusBar();
-  timerAlarmDisable(timer1);
-}
