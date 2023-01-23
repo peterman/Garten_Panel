@@ -4,4 +4,4 @@ vscode:
     
 tasks:
   - before: pip install -U platformio
-  - command: pio run 
+  - command: platformio run 
