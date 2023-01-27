@@ -87,20 +87,20 @@ bool connect_WiFi(){
       WiFi.setHostname(hostname);
     }
     // mit dem WLAN verbinden
-    Serial.printf("Verbindung herstellen mit %s ", ssid);
+    tft.print("Verbindung herstellen mit "); tft.println(ssid);
     timer = millis() / 1000;
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, wifipwd);
     while (WiFi.status() != WL_CONNECTED && (millis() / 1000) < timer + wifi_timeout) {
       delay(500);
-      Serial.print(".");
+      tft.print(".");
     }
     if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("\nTimeout beim Verbindungsaufbau!");
+      tft.println("\nTimeout beim Verbindungsaufbau!");
       return false;
     } else {
-      Serial.print("\nVerbunden mit IP: ");
-      Serial.println(WiFi.localIP());
+      tft.print("\nVerbunden mit IP: ");
+      tft.println(WiFi.localIP());
       return true;
     }
 }
@@ -146,21 +146,43 @@ void setup() {
   touch_calibrate();
   tft.fillScreen(TFT_WHITE);
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
-  clear_top_bar(); //clear_status_bar();
-  
-  tft.drawCentreString("starte Wlan",160,120,2);
-  
+    
+  tft.setViewport(50,30,220,160);
+  tft.frameViewport(TFT_SKYBLUE, -2);
+  tft.setViewport(55,35,210,150);
+  tft.setCursor(0,10,1);
+
   if (connect_WiFi()) {
     server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   } else {
-    Serial.println("Starte Access-Point");
+    tft.println("Starte Access-Point");
     WiFi.softAP("ESP32-Portal", NULL);
     IPAddress IP = WiFi.softAPIP();
-    Serial.print("AP-IP address: ");
-    Serial.println(IP);
+    tft.print("AP-IP address: ");
+    tft.println(IP);
     server.serveStatic("/", SPIFFS, "/").setDefaultFile("setupwifi.html");
+    server.on("/",HTTP_POST, [](AsyncWebServerRequest *request){
+      int params = request->params();
+      for (int i=0;i<params;i++){
+        AsyncWebParameter* p = request->getParam(i);
+        if (p->isPost()){
+          if (p->name() == "ssid"){
+            wificonfig.putString("ssid", p->value().c_str());
+          }
+          if (p->name() == "pass"){
+            wificonfig.putString("wifipwd", p->value().c_str());
+          }
+        }
+      }
+    request->send(200, "text/plain", "done. ESP will restart.");
+    tft.println("Config erledigt. ESP32 wird neu gestartet.");
+    delay(3000);
+    ESP.restart();
+    });
   }
-
+  delay(5000);
+  tft.resetViewport();
+  clear_top_bar(); //clear_status_bar();
   WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   tft.drawCentreString("hole Zeitserver",160,140,2);
 
@@ -192,7 +214,7 @@ void setup() {
   Serial.println(WiFi.localIP().toString()); 
   tft.setTextColor(TFT_BLACK,TFT_LIGHTGREY);
   //tft.drawString(ESPConnect.getSSID(),10,5,1);
-  tft.drawString(WiFi.localIP().toString(),100,5,1);
+  tft.drawCentreString(WiFi.localIP().toString(),100,225,1);
   initButtons();
   drawWifiQuality();
   
