@@ -15,7 +15,8 @@
 
 
 #include <time.h>
-#include "Preferences.h"
+#include <Preferences.h>
+
 #define GFXFF 1
 #define FF18 &FreeSans12pt7b
 
@@ -29,11 +30,12 @@
 #define BEEPER 26
 #define TFT_CAL_FILE "/.touchdata"
 #define REPEAT_CAL false
+#define DEFAULT_WIFI_TIMEOUT 60      // 60 Sekunden
 #define SPIFFS LittleFS
 
 hw_timer_t * timer_clear_status = NULL;
 time_t now;
-tm tm;
+struct tm tm;
 String adate, atime;
 String wochentage[7]={"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
 
@@ -45,7 +47,8 @@ int actpage = 0, oldpage = 99;
 TFT_eSPI tft=TFT_eSPI();
 
 
-
+Preferences wificonfig;
+Preferences version;
 AsyncWebServer server(80);
 
 ButtonWidget btnL = ButtonWidget(&tft);
@@ -59,10 +62,48 @@ uint8_t buttonCount = sizeof(btn) / sizeof(btn[0]);
 #include "functions.h"
 #include "crontab.h"
 
-/* --------------------------------------------------------- */
+/* ------------------------------------------------------------------------------------ */
 
 
+void check_first_boot(){
+}
 
+bool connect_WiFi(){
+    unsigned long timer;
+    char ssid[33];     // Maximallänge: 32
+    char wifipwd[64];  // Maximallänge: 63
+    char hostname[64]; // Maximallänge: 63
+    int wifi_timeout;
+
+    
+
+    if ((wificonfig.getString("ssid", ssid, 32) == 0) || (wificonfig.getString("wifipwd", wifipwd, 32) == 0)) {
+      return false;
+    }
+    
+    wifi_timeout = wificonfig.getInt("timeout", DEFAULT_WIFI_TIMEOUT);
+    if (wificonfig.isKey("hostname")) {
+      wificonfig.getString("hostname", hostname, 63);
+      WiFi.setHostname(hostname);
+    }
+    // mit dem WLAN verbinden
+    Serial.printf("Verbindung herstellen mit %s ", ssid);
+    timer = millis() / 1000;
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, wifipwd);
+    while (WiFi.status() != WL_CONNECTED && (millis() / 1000) < timer + wifi_timeout) {
+      delay(500);
+      Serial.print(".");
+    }
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("\nTimeout beim Verbindungsaufbau!");
+      return false;
+    } else {
+      Serial.print("\nVerbunden mit IP: ");
+      Serial.println(WiFi.localIP());
+      return true;
+    }
+}
 
 
 
@@ -79,7 +120,7 @@ void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   Serial.println("Trying to Reconnect");
   //WiFi.begin(ssid, password);
 }
-/* --------------------------------------------------------- */
+/* ------------------------------------------------------------------------------------ */
 
 
 void setup() {
@@ -88,11 +129,15 @@ void setup() {
   // Interrupt Clear Status
   timer_clear_status = timerBegin(0,80,true);
   timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
+  // set Display blanked
   pinMode(BKLED, OUTPUT);
   digitalWrite(BKLED,1);
 
   Serial.begin(115200);
-  Serial.println("Starting...");
+  wificonfig.begin("wifi", false);
+  version.begin("version", false);
+
+  check_first_boot();
   
   tft.init();
   tft.setRotation(1);
@@ -104,8 +149,18 @@ void setup() {
   clear_top_bar(); //clear_status_bar();
   
   tft.drawCentreString("starte Wlan",160,120,2);
-  //ESPConnect.autoConnect("ESP32Config");
-  //ESPConnect.begin(&server);
+  
+  if (connect_WiFi()) {
+    server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+  } else {
+    Serial.println("Starte Access-Point");
+    WiFi.softAP("ESP32-Portal", NULL);
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP-IP address: ");
+    Serial.println(IP);
+    server.serveStatic("/", SPIFFS, "/").setDefaultFile("setupwifi.html");
+  }
+
   WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   tft.drawCentreString("hole Zeitserver",160,140,2);
 
@@ -128,7 +183,7 @@ void setup() {
   server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/plain", String(ESP.getFreeHeap()));
   });
-  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+  server.serveStatic("/", SPIFFS, "/");
   server.begin();
   
   
