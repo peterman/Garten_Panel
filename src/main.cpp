@@ -9,13 +9,13 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
-#include <ESPConnect.h>
+//#include <ESPConnect.h>
 #include <LittleFS.h>
 #include <PubSubClient.h>
 
-#include <Ticker.h>
-#include <time.h>
 
+#include <time.h>
+#include "Preferences.h"
 #define GFXFF 1
 #define FF18 &FreeSans12pt7b
 
@@ -37,9 +37,6 @@ tm tm;
 String adate, atime;
 String wochentage[7]={"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
 
-Ticker getWifiSignal;
-Ticker pages;
-Ticker refresh_page;
 uint32_t scanTime;
 
 int actpage = 0, oldpage = 99;
@@ -89,33 +86,43 @@ void setup() {
   //  disable brownout detector
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG,0);
   // Interrupt Clear Status
-  //timer_clear_status = timerBegin(0,80,true);
-  //timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
+  timer_clear_status = timerBegin(0,80,true);
+  timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
   pinMode(BKLED, OUTPUT);
-  digitalWrite(BKLED,0);
+  digitalWrite(BKLED,1);
 
   Serial.begin(115200);
   Serial.println("Starting...");
-
   
-
   tft.init();
   tft.setRotation(1);
+  digitalWrite(BKLED,0);
   
-
   touch_calibrate();
   tft.fillScreen(TFT_WHITE);
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
   clear_top_bar(); //clear_status_bar();
+  
+  tft.drawCentreString("starte Wlan",160,120,2);
+  //ESPConnect.autoConnect("ESP32Config");
+  //ESPConnect.begin(&server);
+  WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  tft.drawCentreString("hole Zeitserver",160,140,2);
+
   // starte NTP
   configTime(0,0,NTP_SERVER);
   setenv("TZ",MY_TZ,1);
   tzset();
+
+
+  
+
+  
+  
+  
   
   // starte Server
-  ESPConnect.autoConnect("ESP32Config");
-  ESPConnect.begin(&server);
-  WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  
     
   server.addHandler(new SPIFFSEditor(SPIFFS, "admin","admin"));
   server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -126,15 +133,14 @@ void setup() {
   
   
   
-  //refresh_page.attach(1,ref_page);
 
   Serial.println(WiFi.localIP().toString()); 
   tft.setTextColor(TFT_BLACK,TFT_LIGHTGREY);
-  tft.drawString(ESPConnect.getSSID(),10,5,1);
+  //tft.drawString(ESPConnect.getSSID(),10,5,1);
   tft.drawString(WiFi.localIP().toString(),100,5,1);
   initButtons();
   drawWifiQuality();
-  digitalWrite(BKLED,0);
+  
   
   
 }

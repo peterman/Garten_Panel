@@ -1,9 +1,9 @@
 #include <Arduino.h>
 
 /* Löschen Interrupt Statusline löschen */
-//void IRAM_ATTR timer_clear_statusISR (){
-//  timerAlarmDisable(timer_clear_status);
-//}
+void IRAM_ATTR timer_clear_statusISR (){
+  timerAlarmDisable(timer_clear_status);
+}
 
 
 /* Button Reaktionen  */
@@ -52,12 +52,7 @@ void clear_top_bar(){
   tft.drawRect(0,0,320,15,TFT_BLACK);
 }
 
-void displayDateTime(){
-  tft.fillRect(30,224,260,239,TFT_WHITE);
-  tft.setTextColor(TFT_BLACK);
-  tft.drawCentreString(adate+"\n"+atime,160,228,1); 
-  tft.setTextColor(TFT_BLACK, TFT_WHITE);
-}
+
 
 
 /* converts the dBm to a range between 0 and 100% */

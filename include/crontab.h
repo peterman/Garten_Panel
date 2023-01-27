@@ -19,12 +19,16 @@ long cront1, cront2, cront3, cront4, cront5;
 void cron1() {
   //Your Cronjob action here
   getdatetime();
+  tft.setTextColor(TFT_BLACK, TFT_LIGHTGREY);
+  tft.drawString(adate + " / " + atime + "   ", 10, 5, 1); 
+  tft.setTextColor(TFT_BLACK, TFT_WHITE);
+  
   if (oldpage != actpage){
     tft.fillRect(0,15,320,199,TFT_WHITE);
     
     oldpage = actpage;
   }
-  displayDateTime();
+  
   switch (actpage) {
   case 1:
     tft.drawCentreString("Page 1",160,120,2);
