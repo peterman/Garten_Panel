@@ -9,7 +9,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
-//#include <ESPConnect.h>
+
 #include <LittleFS.h>
 #include <PubSubClient.h>
 
@@ -17,47 +17,7 @@
 #include <time.h>
 #include <Preferences.h>
 
-#define GFXFF 1
-#define FF18 &FreeSans12pt7b
-
-
-
-
-#define NTP_SERVER "de.pool.ntp.org"
-#define MY_TZ "CET-1CEST,M3.5.0/02,M10.5.0/03"
-#define LED0 2
-#define BKLED 15
-#define BEEPER 26
-#define TFT_CAL_FILE "/.touchdata"
-#define REPEAT_CAL false
-#define DEFAULT_WIFI_TIMEOUT 60      // 60 Sekunden
-#define SPIFFS LittleFS
-
-hw_timer_t * timer_clear_status = NULL;
-time_t now;
-struct tm tm;
-String adate, atime;
-String wochentage[7]={"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
-
-uint32_t scanTime;
-
-int actpage = 0, oldpage = 99;
-
-
-TFT_eSPI tft=TFT_eSPI();
-
-
-Preferences wificonfig;
-Preferences version;
-AsyncWebServer server(80);
-
-ButtonWidget btnL = ButtonWidget(&tft);
-ButtonWidget btnR = ButtonWidget(&tft);
-#define BUTTON_W 30
-#define BUTTON_H 20
-ButtonWidget* btn[] = {&btnL, &btnR};;
-uint8_t buttonCount = sizeof(btn) / sizeof(btn[0]);
-
+#include "defs_vars.h"
 #include "touch_calibrate.h"
 #include "functions.h"
 #include "crontab.h"
@@ -87,7 +47,7 @@ bool connect_WiFi(){
       WiFi.setHostname(hostname);
     }
     // mit dem WLAN verbinden
-    tft.print("Verbindung herstellen mit "); tft.println(ssid);
+    tft.println("Verbindung herstellen mit : "); tft.println(ssid);
     timer = millis() / 1000;
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, wifipwd);
@@ -99,7 +59,7 @@ bool connect_WiFi(){
       tft.println("\nTimeout beim Verbindungsaufbau!");
       return false;
     } else {
-      tft.print("\nVerbunden mit IP: ");
+      tft.println("\nVerbunden mit IP: ");
       tft.println(WiFi.localIP());
       return true;
     }
@@ -131,7 +91,9 @@ void setup() {
   timerAttachInterrupt(timer_clear_status, timer_clear_statusISR, true);
   // set Display blanked
   pinMode(BKLED, OUTPUT);
-  digitalWrite(BKLED,1);
+  ledcSetup(0,5000,8);
+  ledcAttachPin(BKLED,0);
+  ledcWrite(0,255);
 
   Serial.begin(115200);
   wificonfig.begin("wifi", false);
@@ -141,7 +103,7 @@ void setup() {
   
   tft.init();
   tft.setRotation(1);
-  digitalWrite(BKLED,0);
+  ledcWrite(0,0);
   
   touch_calibrate();
   tft.fillScreen(TFT_WHITE);
@@ -150,17 +112,17 @@ void setup() {
   tft.setViewport(50,30,220,160);
   tft.frameViewport(TFT_SKYBLUE, -2);
   tft.setViewport(55,35,210,150);
-  tft.setCursor(0,10,1);
+  tft.setCursor(0,10,2);
 
   if (connect_WiFi()) {
-    server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+    server.serveStatic("/", FS, "/").setDefaultFile("index.html");
   } else {
     tft.println("Starte Access-Point");
     WiFi.softAP("ESP32-Portal", NULL);
     IPAddress IP = WiFi.softAPIP();
     tft.print("AP-IP address: ");
     tft.println(IP);
-    server.serveStatic("/", SPIFFS, "/").setDefaultFile("setupwifi.html");
+    server.serveStatic("/", FS, "/").setDefaultFile("setupwifi.html");
     server.on("/",HTTP_POST, [](AsyncWebServerRequest *request){
       int params = request->params();
       for (int i=0;i<params;i++){
@@ -180,9 +142,9 @@ void setup() {
     ESP.restart();
     });
   }
-  delay(5000);
+  
   tft.resetViewport();
-  clear_top_bar(); //clear_status_bar();
+  
   WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   tft.drawCentreString("hole Zeitserver",160,140,2);
 
@@ -190,7 +152,9 @@ void setup() {
   configTime(0,0,NTP_SERVER);
   setenv("TZ",MY_TZ,1);
   tzset();
-
+  delay(5000);
+  clear_top_bar(); //clear_status_bar();
+  cron1_e = 1; cron2_e = 1; cron3_e = 1; cron5_e = 1;
 
   
 
@@ -201,11 +165,11 @@ void setup() {
   // starte Server
   
     
-  server.addHandler(new SPIFFSEditor(SPIFFS, "admin","admin"));
+  server.addHandler(new SPIFFSEditor(FS, "admin","admin"));
   server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/plain", String(ESP.getFreeHeap()));
   });
-  server.serveStatic("/", SPIFFS, "/");
+  server.serveStatic("/", FS, "/");
   server.begin();
   
   
@@ -228,6 +192,7 @@ void loop() {
   uint16_t t_x=0, t_y=0;
   if (millis() - scanTime >= 50 ){
     bool pressed = tft.getTouch(&t_x, &t_y);
+    if (pressed){ ledcWrite(0,0); cron5_e = 1;}
     scanTime=millis();
     for (uint8_t b=0; b<buttonCount; b++){
       if (pressed){

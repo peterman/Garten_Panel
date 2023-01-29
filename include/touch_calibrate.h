@@ -8,22 +8,22 @@ void touch_calibrate()
   uint8_t calDataOK = 0;
 
   // check file system exists
-  if (!SPIFFS.begin(false,"/littlefs")) {
+  if (!FS.begin(false,"/littlefs")) {
     Serial.println("Formatting file system");
-    SPIFFS.format();
-    SPIFFS.begin();
+    FS.format();
+    FS.begin();
   }
 
   // check if calibration file exists and size is correct
-  if (SPIFFS.exists(TFT_CAL_FILE)) {
+  if (FS.exists(TFT_CAL_FILE)) {
     if (REPEAT_CAL)
     {
       // Delete if we want to re-calibrate
-      SPIFFS.remove(TFT_CAL_FILE);
+      FS.remove(TFT_CAL_FILE);
     }
     else
     {
-      File f = SPIFFS.open(TFT_CAL_FILE, "r");
+      File f = FS.open(TFT_CAL_FILE, "r");
       if (f) {
         if (f.readBytes((char *)calData, 14) == 14)
           calDataOK = 1;
@@ -59,7 +59,7 @@ void touch_calibrate()
     tft.println("Calibration complete!");
 
     // store data
-    File f = SPIFFS.open(TFT_CAL_FILE, "w");
+    File f = FS.open(TFT_CAL_FILE, "w");
     if (f) {
       f.write((const unsigned char *)calData, 14);
       f.close();
