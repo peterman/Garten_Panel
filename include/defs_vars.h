@@ -4,7 +4,7 @@
 #define MY_TZ "CET-1CEST,M3.5.0/02,M10.5.0/03"
 #define LED0 2
 #define BKLED 15
-#define BEEPER 26
+#define BEEPER 21 //26
 #define TFT_CAL_FILE "/.touchdata"
 #define REPEAT_CAL false
 #define DEFAULT_WIFI_TIMEOUT 60      // 60 Sekunden
