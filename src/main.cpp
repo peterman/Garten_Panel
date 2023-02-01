@@ -16,6 +16,7 @@
 
 #include <time.h>
 #include <Preferences.h>
+#include "Free_Fonts.h"
 
 #include "defs_vars.h"
 #include "touch_calibrate.h"
@@ -104,7 +105,7 @@ void setup() {
   tft.init();
   tft.setRotation(1);
   ledcWrite(0,0);
-  
+  tft.setFreeFont(CF9);
   touch_calibrate();
   tft.fillScreen(TFT_WHITE);
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
