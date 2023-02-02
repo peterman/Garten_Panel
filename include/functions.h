@@ -33,14 +33,14 @@ void btnR_releaseAction(void){
 void initButtons(){
   uint16_t x = (tft.width() - BUTTON_W);
   uint16_t y = (tft.height()- BUTTON_H);
-  btnL.initButtonUL(0,y,BUTTON_W,BUTTON_H,TFT_BLACK,TFT_LIGHTGREY,TFT_BLUE,"<-",1);
-  btnL.setLabelDatum(-12,1,0);
+  btnL.initButtonUL(10,y-10,BUTTON_W,BUTTON_H,TFT_BLACK,TFT_LIGHTGREY,TFT_BLUE,"right",1);
+  //btnL.setLabelDatum(0,0,0);
   btnL.drawButton(false,"<-");
   btnL.setPressAction(btnL_pressAction);
   btnL.setReleaseAction(btnL_releaseAction);
   
-  btnR.initButtonUL(x,y,BUTTON_W,BUTTON_H,TFT_BLACK,TFT_LIGHTGREY,TFT_BLUE,"->",1);
-  btnR.setLabelDatum(0,1,0);
+  btnR.initButtonUL(x-10,y-10,BUTTON_W,BUTTON_H,TFT_BLACK,TFT_LIGHTGREY,TFT_BLUE,"left",1);
+  //btnR.setLabelDatum(0,0,0);
   btnR.drawButton(false,"->");
   btnR.setPressAction(btnR_pressAction);
   btnR.setReleaseAction(btnR_releaseAction);
@@ -48,8 +48,8 @@ void initButtons(){
 
 /* Lösche obere und untere Statusleiste */
 void clear_top_bar(){
-  tft.fillRect(0,0,320,15,TFT_LIGHTGREY);
-  tft.drawRect(0,0,320,15,TFT_BLACK);
+  tft.fillRect(0,0,320,20,TFT_LIGHTGREY);
+  //tft.drawRect(0,0,320,20,TFT_BLACK);
 }
 
 
@@ -75,12 +75,12 @@ int8_t getWifiQuality() {
 void drawWifiQuality() {
   int8_t quality = getWifiQuality();
   tft.setTextColor(TFT_BLACK, TFT_LIGHTGREY);
-  tft.drawRightString("  " + String(quality) + "%",305, 5, 1);
+  tft.drawRightString("  " + String(quality) + "%",305, 3, 2);
   for (int8_t i = 0; i < 4; i++) {
     tft.drawFastVLine(310 + 2 * i,4,8, TFT_LIGHTGREY);
     for (int8_t j = 0; j < 2 * (i + 1); j++) {
       if (quality > i * 25 || j == 0) {
-        tft.drawPixel(310 + 2 * i, 12 - j,TFT_BLACK);
+        tft.drawPixel(310 + 2 * i, 15 - j,TFT_BLACK);
       }
     }
   }

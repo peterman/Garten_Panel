@@ -20,11 +20,11 @@ void cron1() {
   //Your Cronjob action here
   getdatetime();
   tft.setTextColor(TFT_BLACK, TFT_LIGHTGREY);
-  tft.drawString(adate + " / " + atime + "   ", 10, 5, 1); 
+  tft.drawString(atime , 5, 3, 2); 
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
   
   if (oldpage != actpage){
-    tft.fillRect(0,15,320,199,TFT_WHITE);
+    tft.fillRect(0,20,320,185,TFT_WHITE);
     
     oldpage = actpage;
   }

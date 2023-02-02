@@ -16,7 +16,6 @@
 
 #include <time.h>
 #include <Preferences.h>
-#include "Free_Fonts.h"
 
 #include "defs_vars.h"
 #include "touch_calibrate.h"
@@ -105,8 +104,11 @@ void setup() {
   tft.init();
   tft.setRotation(1);
   ledcWrite(0,0);
-  tft.setFreeFont(CF9);
+  
   touch_calibrate();
+  // uint16_t calData[5] = { 342, 3531, 262, 3508, 7 };
+  // tft.setTouch(calData);
+  
   tft.fillScreen(TFT_WHITE);
   tft.setTextColor(TFT_BLACK, TFT_WHITE);
     
@@ -179,7 +181,7 @@ void setup() {
   Serial.println(WiFi.localIP().toString()); 
   tft.setTextColor(TFT_BLACK,TFT_LIGHTGREY);
   //tft.drawString(ESPConnect.getSSID(),10,5,1);
-  tft.drawCentreString(WiFi.localIP().toString(),100,225,1);
+  tft.drawCentreString(WiFi.localIP().toString(),100,225,2);
   initButtons();
   drawWifiQuality();
   

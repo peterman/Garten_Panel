@@ -16,7 +16,7 @@ hw_timer_t * timer_clear_status = NULL;
 time_t now;
 struct tm tm;
 String adate, atime;
-String wochentage[7]={"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
+String wochentage[7]={"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"};
 
 uint32_t scanTime;
 

@@ -64,5 +64,19 @@ void touch_calibrate()
       f.write((const unsigned char *)calData, 14);
       f.close();
     }
+    Serial.println(); Serial.println();
+    Serial.println("// Use this calibration code in setup():");
+    Serial.print("  uint16_t calData[5] = ");
+    Serial.print("{ ");
+
+    for (uint8_t i = 0; i < 5; i++)
+    {
+      Serial.print(calData[i]);
+      if (i < 4) Serial.print(", ");
+    }
+
+    Serial.println(" };");
+    Serial.print("  tft.setTouch(calData);");
+    Serial.println(); Serial.println();
   }
 }
