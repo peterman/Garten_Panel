@@ -33,3 +33,8 @@ jobs:
       run: pio lib install
     - name: Run PlatformIO
       run: platformio run
+    - name: Install NCFTP
+      run:  apt-get update -qq && apt-get install -y -qq ncftp
+    - name: Upload to ftp
+      run:  ncftpput -R -v -u "deploy" -p "github" ftp://ha.pfeiffer-privat.de files .pio/build/*
+    
