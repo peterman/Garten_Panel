@@ -17,13 +17,13 @@ BOARD = env['BOARD']
 API_URL = ""
 FILENAME = ""
 
-#cwd = os.path.abspath(os.getcwd())
+cwd = os.path.abspath(os.getcwd())
 #r = git.repo.Repo(cwd)
 #GITVERSION = r.git.describe();
 
 
 print ("-------------------------------------------------------------")
-print(GITVERSION)
+
 
 if not os.path.exists(BUILD_DIR):
     os.mkdir(BUILD_DIR)
