@@ -33,8 +33,11 @@ jobs:
       run: pio lib install
     - name: Run PlatformIO
       run: platformio run
-    - name: Install NCFTP
-      run:  sudo apt-get update -qq && sudo apt-get install -y -qq ncftp
-    - name: Upload to ftp
-      run:  ncftpput -R -v -u "deploy" -p "github" ftp://ha.pfeiffer-privat.de files .pio/build/*
+    - name: 📂 Sync files
+      uses: SamKirkland/FTP-Deploy-Action@4.1.0
+      with:
+        server: ftp.server.de
+        username: ${{ secrets.ftp_user }}
+        password: ${{ secrets.ftp_pass }}
+        local-dir: .pio/build/*
     
