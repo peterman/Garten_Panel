@@ -1,33 +1,31 @@
 Import("env")
 import os
-#import git
 import time
 import subprocess
 import shutil
 import requests
 import json
 
-#BUILDNR = int(round(time.time()))
-BUILDNR = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+
+BUILD_TIME = int(round(time.time()))
 VERSION_FILE = "version.h"
 CONFIG_FILE = "config.h"
 BUILD_DIR = "build/"
 BUILD_SRC = env['PIOENV']
 BOARD = env['BOARD']
-API_URL = ""
+SERVER_URL = "http://217.160.249.173/"
+CONFIG_URL = ""
 FILENAME = ""
 
 cwd = os.path.abspath(os.getcwd())
-#r = git.repo.Repo(cwd)
-#GITVERSION = r.git.describe();
-
-
 print ("-------------------------------------------------------------")
-
 
 if not os.path.exists(BUILD_DIR):
     os.mkdir(BUILD_DIR)
-
+if not os.path.exists(BUILD_DIR + BUILD_SRC):
+        os.mkdir(BUILD_DIR + BUILD_SRC)
+if not os.path.exists(BUILD_DIR + 'config'):
+        os.mkdir(BUILD_DIR + 'config')
 
 def getBoardID(name):
     print ("[getBoardID] Getting Board-ID")
@@ -44,15 +42,25 @@ def getBoardID(name):
 
 def writeversion(source, target, env):
     print ("----------------------- writeversion Start -----------------------")
-       
+    
     binPath = os.path.join('.pio/build',BUILD_SRC,'firmware.bin')
-    destPath = os.path.join('build', BOARD+"_"+str(BUILDNR)+'.bin')
-
-    global FILENAME 
-    FILENAME = BOARD+"_"+str(BUILDNR)+'.bin'
-    #print ("Copying File: ")+binPath+(" to ")+destPath
-    # os.rename(binPath, destPath)
+    destPath = os.path.join('build', BUILD_SRC, "firmware_"+str(BUILD_TIME)+'.bin')
+    confFile = os.path.join('build','config','config.json')
+    
     shutil.copyfile(binPath, destPath)
+    
+    if os.path.exists(confFile):
+        f = open(confFile, "a")
+    else:
+        f = open(confFile, "w")
+    
+    confData = {
+        "type": BUILD_SRC,
+        "version": "2.5.1",
+        "url": SERVER_URL + BUILD_SRC + "/firmware_" + str(BUILD_TIME)+".bin"
+        }
+    with f as outfile:
+        json.dump(confData, outfile)
     
     print ("----------------------- writeversion End -----------------------")
 
@@ -79,19 +87,19 @@ def prepareVersionAndConfig(source, target, env):
 
 
     #f.write('const int FW_VERSION = '+str(BUILDNR)+';\n#ifndef VERSION_H\n#define VERSION_H\n#define _VER_ ( "'+GITVERSION+'" )\n#endif //VERSION_H')
-    f.write('const int FW_VERSION = '+str(BUILDNR)+';\n#ifndef VERSION_H\n#define VERSION_H\n#endif //VERSION_H')
+    f.write('const int FW_VERSION = '+str(BUILD_TIME)+';\n#ifndef VERSION_H\n#define VERSION_H\n#endif //VERSION_H')
     f.close()
 
-    #FILE = os.path.join(os.path.join(cwd, "src"), CONFIG_FILE)
+    FILE = os.path.join(os.path.join(cwd, "src"), CONFIG_FILE)
     #os.remove(FILE)
 
-    #if os.path.exists(FILE):
-    #    f = open(FILE, "r+")
-    #else:
-    #    f = open(FILE, "w")
+    if os.path.exists(FILE):
+        f = open(FILE, "r+")
+    else:
+        f = open(FILE, "w")
     
-    #f.write('#ifndef CONFIG_H\n#define CONFIG_H\n#define _BOARDNAME_ ( "'+BOARD+'" )\n#define _BOARDID_ ("'+str(getBoardID(BOARD))+'")\n#endif //VERSION_H')
-    #f.close()
+    f.write('#ifndef CONFIG_H\n#define CONFIG_H\n#define _BOARDNAME_ ( "'+BUILD_SRC+'" )\n#endif //VERSION_H')
+    f.close()
     print ("----------------------- prepareVersionAndConfig End -----------------------")
 
 

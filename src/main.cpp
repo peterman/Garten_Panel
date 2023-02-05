@@ -17,6 +17,9 @@
 #include <time.h>
 #include <Preferences.h>
 
+#include "config.h"
+#include "version.h"
+
 #include "defs_vars.h"
 #include "touch_calibrate.h"
 #include "functions.h"

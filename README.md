@@ -6,3 +6,5 @@ https://how2electronics.com/weather-monitoring-on-esp32-with-tft-touch-display/
 http://w8bh.net/touch.pdf
 
 https://github.com/krywenko/ESP_TFT_GRAPH_MQTT
+
+https://github.com/chrisjoyce911/esp32FOTA
