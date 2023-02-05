@@ -37,9 +37,9 @@ jobs:
     - name: 📂 Sync files
       uses: airvzxf/ftp-deployment-action@latest
       with:
-        server: ha.pfeiffer-privat.de
-        user: ${{ secrets.ftp_user }}
-        password: ${{ secrets.ftp_pass }}
+        server: 217.160.249.173
+        user: ftpuser
+        password: deploy_ota
         local_dir: "./build/"
-        remote_dir: "/OTA"
+        #remote_dir: "/OTA"
     
