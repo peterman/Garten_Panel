@@ -40,5 +40,5 @@ jobs:
         server: ha.pfeiffer-privat.de
         username: ${{ secrets.ftp_user }}
         password: ${{ secrets.ftp_pass }}
-        local-dir: .pio/build/
+        local-dir: build/
     
