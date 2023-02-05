@@ -40,5 +40,6 @@ jobs:
         server: ha.pfeiffer-privat.de
         user: ${{ secrets.ftp_user }}
         password: ${{ secrets.ftp_pass }}
-        local-dir: "./build/"
+        local_dir: "./build/"
+        remote_dir: "/OTA"
     
