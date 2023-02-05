@@ -35,10 +35,10 @@ jobs:
     - name: Run PlatformIO
       run: platformio run
     - name: 📂 Sync files
-      uses: SamKirkland/FTP-Deploy-Action@4.1.0
+      uses: airvzxf/ftp-deployment-action@latest
       with:
         server: ha.pfeiffer-privat.de
-        username: ${{ secrets.ftp_user }}
+        user: ${{ secrets.ftp_user }}
         password: ${{ secrets.ftp_pass }}
-        local-dir: build/
+        local-dir: "./build/""
     
