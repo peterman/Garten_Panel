@@ -5,6 +5,7 @@ import subprocess
 import shutil
 import requests
 import json
+import semver
 
 
 BUILD_TIME = int(round(time.time()))
@@ -24,20 +25,28 @@ if not os.path.exists(BUILD_DIR):
     os.mkdir(BUILD_DIR)
 if not os.path.exists(BUILD_DIR + BUILD_SRC):
         os.mkdir(BUILD_DIR + BUILD_SRC)
-if not os.path.exists(BUILD_DIR + 'config'):
-        os.mkdir(BUILD_DIR + 'config')
 
-def getBoardID(name):
-    print ("[getBoardID] Getting Board-ID")
-    payload = {'columns': 'ID', 'filter': 'InternalName,eq,'+name}
-    r = requests.get(API_URL + "/Boards/?transform=1" , params=payload)
-    r.raise_for_status()
 
-    ret = r.json()
-    BoardID = ret['Boards'][0]['ID']
-    print ("[getBoardID] Board-ID: ")+str(BoardID)
-    return BoardID
+def getBoardVersion(name):
+    payload = {"board": name}
+    r = requests.get('http://localhost/ESP_Verwaltung/getVersion.php' , params=payload)
+    
+    
+    return r.text
+    
 
+def archiveVersion(source, target, env):
+    confData = {
+        "save": "1",
+        "board": BUILD_SRC,
+        "version": "2.5.1",
+        "url": SERVER_URL + BUILD_SRC + "/firmware_" + str(BUILD_TIME)+".bin",
+        "build": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(BUILD_TIME))
+        }
+       
+    url = 'http://localhost/ESP_Verwaltung/archive.php'
+    x = requests.post(url, confData)
+    print(x)
 
 
 def writeversion(source, target, env):
@@ -45,22 +54,10 @@ def writeversion(source, target, env):
     
     binPath = os.path.join('.pio/build',BUILD_SRC,'firmware.bin')
     destPath = os.path.join('build', BUILD_SRC, "firmware_"+str(BUILD_TIME)+'.bin')
-    confFile = os.path.join('build','config','config.json')
-    
+        
     shutil.copyfile(binPath, destPath)
     
-    if os.path.exists(confFile):
-        f = open(confFile, "a")
-    else:
-        f = open(confFile, "w")
-    
-    confData = {
-        "type": BUILD_SRC,
-        "version": "2.5.1",
-        "url": SERVER_URL + BUILD_SRC + "/firmware_" + str(BUILD_TIME)+".bin"
-        }
-    with f as outfile:
-        json.dump(confData, outfile)
+
     
     print ("----------------------- writeversion End -----------------------")
 
@@ -70,7 +67,7 @@ def before_build(source, target, env):
 
 def after_build(source, target, env):
     print ("----------------------- archiveVersion Start -----------------------")
-    #archiveVersion(source, target, env)
+    archiveVersion(source, target, env)
     print ("----------------------- archiveVersion End -----------------------")
     # do some actions
 
@@ -100,6 +97,11 @@ def prepareVersionAndConfig(source, target, env):
     
     f.write('#ifndef CONFIG_H\n#define CONFIG_H\n#define _BOARDNAME_ ( "'+BUILD_SRC+'" )\n#endif //VERSION_H')
     f.close()
+
+    oldversion = semver.VersionInfo.parse(getBoardVersion(BUILD_SRC))
+    newversion = oldversion
+    newversion.bump_patch()
+    print("increment"+oldversion+" new"+newversion)
     print ("----------------------- prepareVersionAndConfig End -----------------------")
 
 

@@ -1,4 +1,4 @@
-const int FW_VERSION = 1675619845;
+const int FW_VERSION = 1675716177;
 #ifndef VERSION_H
 #define VERSION_H
 #endif //VERSION_HHION_H
