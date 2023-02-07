@@ -5,7 +5,7 @@ import subprocess
 import shutil
 import requests
 import json
-import semver
+import semantic_version
 
 
 BUILD_TIME = int(round(time.time()))
@@ -30,16 +30,52 @@ if not os.path.exists(BUILD_DIR + BUILD_SRC):
 def getBoardVersion(name):
     payload = {"board": name}
     r = requests.get('http://localhost/ESP_Verwaltung/getVersion.php' , params=payload)
-    
-    
     return r.text
     
+def prepareVersionAndConfig(source, target, env):
+    print ("----------------------- prepareVersionAndConfig Start -----------------------")
+
+    FILE = os.path.join(os.path.join(cwd, "src"), VERSION_FILE)
+    #os.remove(FILE)
+
+    if os.path.exists(FILE):
+        f = open(FILE, "r+")
+    else:
+        f = open(FILE, "w")
+
+
+    #f.write('const int FW_VERSION = '+str(BUILDNR)+';\n#ifndef VERSION_H\n#define VERSION_H\n#define _VER_ ( "'+GITVERSION+'" )\n#endif //VERSION_H')
+    f.write('const int FW_VERSION = '+str(BUILD_TIME)+';\n#ifndef VERSION_H\n#define VERSION_H\n#endif //VERSION_H')
+    f.close()
+
+    FILE = os.path.join(os.path.join(cwd, "src"), CONFIG_FILE)
+    #os.remove(FILE)
+
+    if os.path.exists(FILE):
+        f = open(FILE, "r+")
+    else:
+        f = open(FILE, "w")
+    
+    f.write('#ifndef CONFIG_H\n#define CONFIG_H\n#define _BOARDNAME_ ( "'+BUILD_SRC+'" )\n#endif //VERSION_H')
+    f.close()
+
+    
+    
+    print ("----------------------- prepareVersionAndConfig End -----------------------")
+
+
 
 def archiveVersion(source, target, env):
+    oldversion = semantic_version.Version(getBoardVersion(BUILD_SRC))
+    print(str(oldversion))
+    newversion = oldversion.next_patch()
+    print(str(newversion))
+ 
+
     confData = {
         "save": "1",
         "board": BUILD_SRC,
-        "version": "2.5.1",
+        "version": str(newversion),
         "url": SERVER_URL + BUILD_SRC + "/firmware_" + str(BUILD_TIME)+".bin",
         "build": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(BUILD_TIME))
         }
@@ -70,39 +106,6 @@ def after_build(source, target, env):
     archiveVersion(source, target, env)
     print ("----------------------- archiveVersion End -----------------------")
     # do some actions
-
-def prepareVersionAndConfig(source, target, env):
-    print ("----------------------- prepareVersionAndConfig Start -----------------------")
-
-    FILE = os.path.join(os.path.join(cwd, "src"), VERSION_FILE)
-    #os.remove(FILE)
-
-    if os.path.exists(FILE):
-        f = open(FILE, "r+")
-    else:
-        f = open(FILE, "w")
-
-
-    #f.write('const int FW_VERSION = '+str(BUILDNR)+';\n#ifndef VERSION_H\n#define VERSION_H\n#define _VER_ ( "'+GITVERSION+'" )\n#endif //VERSION_H')
-    f.write('const int FW_VERSION = '+str(BUILD_TIME)+';\n#ifndef VERSION_H\n#define VERSION_H\n#endif //VERSION_H')
-    f.close()
-
-    FILE = os.path.join(os.path.join(cwd, "src"), CONFIG_FILE)
-    #os.remove(FILE)
-
-    if os.path.exists(FILE):
-        f = open(FILE, "r+")
-    else:
-        f = open(FILE, "w")
-    
-    f.write('#ifndef CONFIG_H\n#define CONFIG_H\n#define _BOARDNAME_ ( "'+BUILD_SRC+'" )\n#endif //VERSION_H')
-    f.close()
-
-    oldversion = semver.VersionInfo.parse(getBoardVersion(BUILD_SRC))
-    newversion = oldversion
-    newversion.bump_patch()
-    print("increment"+oldversion+" new"+newversion)
-    print ("----------------------- prepareVersionAndConfig End -----------------------")
 
 
 env.AddPreAction("buildprog", before_build)
