@@ -37,9 +37,9 @@ jobs:
     - name: 📂 Sync files
       uses: airvzxf/ftp-deployment-action@latest
       with:
-        server: 217.160.249.173
-        user: ftpuser
-        password: deploy_ota
+        server: iot.pfeiffer-privat.de
+        user: otaserver
+        password: MyOtaPass
         local_dir: "./build/"
-        #remote_dir: "/OTA"
+        remote_dir: "/otafiles"
     
